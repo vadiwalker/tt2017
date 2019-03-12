@@ -5,7 +5,7 @@ let x = ref 0;;
 let rec new_var c = x := !x + 1; ("n" ^ string_of_int(!x))
 ;;
 
-let system_to_equation x = (Fun((new_var 0), (map fst x)), Fun((new_var 0), (map snd x)))
+let system_to_equation x = (Fun((new_var ()), (map fst x)), Fun((new_var ()), (map snd x)))
 ;;
 
 let rec take s x = match s with

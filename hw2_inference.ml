@@ -20,7 +20,7 @@ let rec infer_simp_equations a = match a with
 	| Hw1.Var x -> ([], S_Elem(x))
 	| App(p, q) -> let (pE, pT) = (infer_simp_equations p) in
 					let (qE, qT) = (infer_simp_equations q) in
-						let aT = S_Elem(new_var 0) in
+						let aT = S_Elem(new_var ()) in
 							(pE @ qE @ [pT, S_Arrow(qT, aT)], aT)
 	| Abs(x, p) -> let (pE, pT) = (infer_simp_equations p) in
 					(pE, S_Arrow(S_Elem(x), pT))
@@ -96,7 +96,7 @@ let rec sub a var to_s = match a with
 ;;
 
 let rec remove_quantifiers t = match t with
-	| HM_ForAll(x, y) -> remove_quantifiers (sub y x (HM_Elem(new_var 0)))
+	| HM_ForAll(x, y) -> remove_quantifiers (sub y x (HM_Elem(new_var ())))
 	| _ as cur -> cur
 ;;
 
@@ -187,13 +187,13 @@ let rec sup_algorithm_w g m = match m with
 							if sol1 = None then None else let (s1, t1) = unpack sol1 in
 								let sol2 = sup_algorithm_w (apply_substitution_to_g s1 g) e2 in
 									if sol2 = None then None else let (s2, t2) = unpack sol2 in
-										let beta = HM_Elem(new_var 0) in
+										let beta = HM_Elem(new_var ()) in
 											let alg_v = solve_system [alg_of_hm_type (apply_single_sub s2 t1), alg_of_hm_type (HM_Arrow(t2, beta))] in
 												if alg_v = None then None else let v = hm_type_sub_of_alg_sub (unpack alg_v) in
 													let s = composition (composition v s1) s2 in
 														Some (s, (apply_single_sub s beta))
 
-	| HM_Abs(x, e) -> let beta = HM_Elem(new_var 0) in
+	| HM_Abs(x, e) -> let beta = HM_Elem(new_var ()) in
 						let sol1 = sup_algorithm_w ([(HM_Var(x), beta)] @ (remove_x g (HM_Var(x)))) e in
 							if sol1 = None then None else let (s1, t1) = unpack sol1 in
 								Some (s1, HM_Arrow(apply_single_sub s1 beta, t1))
@@ -205,5 +205,17 @@ let rec sup_algorithm_w g m = match m with
 											Some ((composition s2 s1), t2)
 ;;
 
+let rec string_of_hm_type a = match a with
+	| HM_Elem(x) -> x
+	| HM_Arrow(x, y) -> (string_of_hm_type x) ^ " -> " ^ (string_of_hm_type y)
+	| HM_ForAll(x, y) -> "V(" ^ x ^ ")." ^ (string_of_hm_type y)
+;;
+
 let rec algorithm_w a = sup_algorithm_w [] a
 ;;
+
+(* let x = HM_Abs("x", HM_Var("x"));;
+
+if algorithm_w x = None then print_string ("No decision") else 
+	print_string (string_of_hm_type (snd (unpack (algorithm_w x))))
+;; *)
