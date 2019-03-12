@@ -155,7 +155,6 @@ let rec apply_substitution_to_g s g = match g with
 	| (x, t) :: tail -> (x, apply_single_sub s t) :: (apply_substitution_to_g s tail)
 ;;
 
-(* 
 let rec unpack_var x = match x with
 	| Hw2_unify.Var(y) -> y
 	| _ -> raise (Invalid_argument "unpack_var")
@@ -163,16 +162,21 @@ let rec unpack_var x = match x with
 
 let rec hm_type_of_alg a = match a with
 	| Hw2_unify.Var(x) -> HM_Elem(x)
-	| Hw2_unify.Fun(f, [x, y]) -> if f = "f" then HM_Arrow(hm_type_of_alg x, hm_type_of_alg y) else
-									if f = "g" then HM_ForAll(unpack_var x, hm_type_of_alg y) else
-										raise (Invalid_argument "hm_type_of_alg")
+	| Hw2_unify.Fun(f, [x; y]) -> HM_Arrow(hm_type_of_alg x, hm_type_of_alg y)
+	| _ -> raise (Invalid_argument "hm_type_of_alg")
 ;;
 
 let rec alg_of_hm_type a = match a with
 	| HM_Elem(x) -> Hw2_unify.Var(x)
-	| HM_Arrow(x, y) -> Hw2_unify.Fun("f", [alg_of_hm_type x, alg_of_hm_type y])
-	| HM_ForAll(x, y) -> Hw2.unify.Fun("g", [Hw2_unify.Var(x), (alg_of_hm_type y)])
-;;  *)
+	| HM_Arrow(x, y) -> Hw2_unify.Fun("f", [alg_of_hm_type x; alg_of_hm_type y])
+	| HM_ForAll(x, y) as cur -> alg_of_hm_type (remove_quantifiers cur)
+;;
+
+let rec hm_type_sub_of_alg_sub s = match s with
+	| [] -> Nil
+	| head :: tail -> match head with
+		| (x, y) -> Cons((x, hm_type_of_alg y), (hm_type_sub_of_alg_sub tail))
+;;
 
 let rec sup_algorithm_w g m = match m with 
 	| HM_Var(a) -> let t = get_from_G g m in
@@ -184,9 +188,10 @@ let rec sup_algorithm_w g m = match m with
 								let sol2 = sup_algorithm_w (apply_substitution_to_g s1 g) e2 in
 									if sol2 = None then None else let (s2, t2) = unpack sol2 in
 										let beta = HM_Elem(new_var 0) in
-											let v = (* solve_system [apply_sub s2 t1] [HM_Arrow(t2, beta)] *) Cons(("x", HM_Elem("x")), Nil) in
-												let s = composition (composition v s1) s2 in
-													Some (s, (apply_single_sub s beta))
+											let alg_v = solve_system [alg_of_hm_type (apply_single_sub s2 t1), alg_of_hm_type (HM_Arrow(t2, beta))] in
+												if alg_v = None then None else let v = hm_type_sub_of_alg_sub (unpack alg_v) in
+													let s = composition (composition v s1) s2 in
+														Some (s, (apply_single_sub s beta))
 
 	| HM_Abs(x, e) -> let beta = HM_Elem(new_var 0) in
 						let sol1 = sup_algorithm_w ([(HM_Var(x), beta)] @ (remove_x g (HM_Var(x)))) e in
@@ -202,7 +207,3 @@ let rec sup_algorithm_w g m = match m with
 
 let rec algorithm_w a = sup_algorithm_w [] a
 ;;
-
-(* 
-
-let algorithm_w hm =  *)
