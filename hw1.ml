@@ -85,24 +85,32 @@ let lambda_of_string expr =
 	let pos = ref 0 in
 
 	let next () = (pos := !pos + 1) in 
-	
-	let cchar () = if !pos < (String.length expr) then (String.get expr !pos) 
-													else '!' in
+
+	let rec cchar () = if !pos >= (String.length expr) then '!' else 
+													let cur = (String.get expr !pos) in
+														if cur = ' ' then (next(); cchar()) else cur in 
+
+	let cchar_without_moving () = if !pos >= (String.length expr) then '!' else (String.get expr !pos) in
+
 
 	let is_letter x = (('a' <= x) && (x <= 'z')) in
-	
-	let rec var () = 
-		let x = cchar () in
+
+	let rec var () =
+		let x = cchar_without_moving () in
 		if is_letter x then (Char.escaped x) ^ (next (); var ()) else "" in
 	
-	let rec lambda () = 
+	let rec lambda () =
 		let temp = match cchar() with
+		| ' ' -> next(); lambda()
+
 		| '\\' ->
 		  let a = next(); var() in
-		  let b = (assert (cchar() = '.')); next(); lambda() in
-		  Abs(a, b) 
+		  	let b = (assert (cchar() = '.')); next(); lambda() in
+		 	 Abs(a, b) 
 
-		| '(' -> let ret = next (); lambda () in (assert (cchar() = ')')); next (); ret
+		| '(' -> let ret = next (); lambda () in 
+				(assert (cchar() = ')')); next (); ret
+
 		| x -> if is_letter x then Var (var ())
 								else failwith "invalid expression!" in
 
@@ -111,11 +119,14 @@ let lambda_of_string expr =
 	
 	lambda ();;
 
-
 let rec string_of_lambda = function 
 	| Var x -> x
 	| Abs (x, y) -> "(" ^ "\\" ^ x ^ "." ^ (string_of_lambda y) ^ ")"
 	| App (x, y) -> "(" ^ (string_of_lambda x) ^ (string_of_lambda y) ^ ")";;
+
+let s = lambda_of_string("(   \\f.\\x   .   (f f f f f f f f x   )  )");;
+
+(* print_string (string_of_lambda s);; *)
 
 (* let var = 10;;
 print_int var;; *)

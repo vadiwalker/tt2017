@@ -62,13 +62,19 @@ let rec apply_substitution_to_vars s v = match v with
 	| Cons(head, tail) -> Cons((apply_substitution_to_var s head), (apply_substitution_to_vars s tail))
 ;;
 
+let rec connect a b = match a, b with
+	| Nil, Nil -> Nil
+	| Cons(x, a_tail), Cons(y, b_tail) -> Cons((x, y), (connect a_tail b_tail))
+	| _, _ -> raise (Invalid_argument "Connect")
+;;
+
 let rec infer_simp_type a = let (eqs, t) = infer_simp_equations a in
 								let (alg_eqs, alg_type) = (simp_eq_to_alg eqs), (simp_expr_to_alg t) in
 									let alg_sub = (solve_system alg_eqs) in
 										if alg_sub = None then None else
 											let free_vs = free_vars a in 
 												let g = (apply_substitution_to_vars (unpack alg_sub) free_vs) in
-													Some (("string", g), (alg_expr_to_simp (apply_substitution (unpack alg_sub) alg_type)))
+													Some ((connect free_vs g), (alg_expr_to_simp (apply_substitution (unpack alg_sub) alg_type)))
 ;;
 
 let expr = Abs("f", Abs("x", App(Var("f"), App(Var("f"), Var("x")))));;
@@ -178,6 +184,12 @@ let rec hm_type_sub_of_alg_sub s = match s with
 		| (x, y) -> Cons((x, hm_type_of_alg y), (hm_type_sub_of_alg_sub tail))
 ;;
 
+let rec string_of_hm_type a = match a with
+	| HM_Elem(x) -> x
+	| HM_Arrow(x, y) -> (string_of_hm_type x) ^ " -> " ^ (string_of_hm_type y)
+	| HM_ForAll(x, y) -> "V(" ^ x ^ ")." ^ (string_of_hm_type y)
+;;
+
 let rec sup_algorithm_w g m = match m with 
 	| HM_Var(a) -> let t = get_from_G g m in
 						if t = None then None
@@ -205,17 +217,12 @@ let rec sup_algorithm_w g m = match m with
 											Some ((composition s2 s1), t2)
 ;;
 
-let rec string_of_hm_type a = match a with
-	| HM_Elem(x) -> x
-	| HM_Arrow(x, y) -> (string_of_hm_type x) ^ " -> " ^ (string_of_hm_type y)
-	| HM_ForAll(x, y) -> "V(" ^ x ^ ")." ^ (string_of_hm_type y)
-;;
-
 let rec algorithm_w a = sup_algorithm_w [] a
 ;;
 
-(* let x = HM_Abs("x", HM_Var("x"));;
+let x = HM_Abs("y", HM_App(HM_Abs("x", HM_Var("x")), HM_Var("y")))
+;;
 
 if algorithm_w x = None then print_string ("No decision") else 
 	print_string (string_of_hm_type (snd (unpack (algorithm_w x))))
-;; *)
+;;
