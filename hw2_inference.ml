@@ -10,6 +10,10 @@ let y = S_Elem "X";;
 
 (* print_int(!x);; *)
 
+let x = ref 0;;
+let rec new_var c = x := !x + 1; ("n" ^ string_of_int(!x))
+;;
+
 let rec infer_simp_type a = Some (("a", Cons(S_Elem("x"), Nil)), S_Elem("x"));;
 
 let rec infer_simp_equations a = match a with
@@ -75,9 +79,9 @@ let rec string_of_simp_type t = match t with
 	| S_Arrow(a, b) -> (string_of_simp_type a) ^ "->" ^ (string_of_simp_type b)
 ;;
 
-if (solution = None) then print_string "No solution" else 
+(* if (solution = None) then print_string "No solution" else 
 	print_string (string_of_simp_type (snd (unpack solution)));;
-
+ *)
 let rec rename a = failwith "Not implemented";;
 
 let rec get_from_G g m = match g with
@@ -111,7 +115,7 @@ let rec remove_s a x = match a with
 	| head :: tail -> if head = x then (remove_s tail x) else head :: (remove_s tail x)
 ;;
 
-let rec wwqq	 a = match a with
+let rec hm_free_vars a = match a with
 	| HM_Elem(x) -> [x]
 	| HM_Arrow(x, y) -> merge_s (hm_free_vars x) (hm_free_vars y)
 	| HM_ForAll(x, y) -> remove_s (hm_free_vars y) x
