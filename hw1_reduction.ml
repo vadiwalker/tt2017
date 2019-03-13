@@ -1,42 +1,46 @@
 open List;;
-open Hw1
+open Hw1;;
+
+let x = ref 0;;
+let rec new_var c = x := !x + 1; ("n" ^ string_of_int(!x))
+;;
 
 let rec drop_element a to_drop = match a with
-	| Nil -> Nil
-	| Cons(head, tail) -> 
+	| [] -> []
+	| head :: tail -> 
 		if head = to_drop then drop_element tail to_drop 
-		else Cons(head, (drop_element tail to_drop))
+		else head :: (drop_element tail to_drop)
 ;;
 
 let rec merge a b = match a with
-	| Nil -> b
-	| Cons(head, tail) -> merge tail (Cons(head, b))
+	| [] -> b
+	| head :: tail -> merge tail (head :: b)
 ;;
 
 let rec free_vars expr = match expr with
-	| Var x -> Cons(x, Nil)
+	| Var x -> x :: []
 	| Abs(x, p) -> drop_element (free_vars p) x
 	| App(p, q) -> merge (free_vars p) (free_vars q)
 ;;
 
 let rec in_list a to_check = match a with
-	| Nil -> false
-	| Cons(x, tail) -> if x = to_check then true else in_list tail to_check
+	| [] -> false
+	| x :: tail -> if x = to_check then true else in_list tail to_check
 ;;
 
 let rec is_intersection a b = match a with 
-	| Nil -> false
-	| Cons(x, tail) -> if (in_list b x) then true else is_intersection tail b
+	| [] -> false
+	| x :: tail -> if (in_list b x) then true else is_intersection tail b
 ;;
 
 
 let rec free_to_subst_c q p x abss = match p with
 	| Var y -> if x = y then not (is_intersection (free_vars q) abss) else true
-	| Abs(y, a) -> free_to_subst_c q a x (Cons(y, abss))
+	| Abs(y, a) -> free_to_subst_c q a x (y :: abss)
 	| App(a, b) -> (free_to_subst_c q a x abss) && (free_to_subst_c q a x abss)
 
 (* p[x = q] *)
-let rec free_to_subst q p x = free_to_subst_c q p x Nil;;
+let rec free_to_subst q p x = free_to_subst_c q p x [];;
 
 let rec is_normal_form p = match p with
 	| Var _ -> true
@@ -55,7 +59,7 @@ let rec sub p x q = match p with
 let rec is_alpha_equivalent p q = match p, q with
 	| Var x, Var y -> if x = y then true else false
 	| App(a, b), App(c, d) -> (is_alpha_equivalent a c) && (is_alpha_equivalent b d)
-	| Abs(x, a), Abs(y, b) -> (is_alpha_equivalent (sub a x (Var "t")) (sub b y (Var "t")))
+	| Abs(x, a), Abs(y, b) -> (is_alpha_equivalent (sub a x (Var (new_var ()))) (sub b y (Var (new_var ()))))
 	| _, _ -> false
 ;;
 
@@ -86,5 +90,10 @@ let rec mem_reduce_to_normal_form p reduced = if (mem_assoc p reduced) then (ass
 
 let rec reduce_to_normal_form p = (fst (mem_reduce_to_normal_form p [(Var "x", Var "x")]))
 ;;
+
+
+let s = lambda_of_string("(   \\f.(\\x   .   (f00123 fasds21312S f f f f f f x   ))  f )");;
+
+(* print_string (string_of_lambda (reduce_to_normal_form s));; *)
 
 (* print_string (string_of_lambda (reduce_to_normal_form (App(Abs("x", Var "x"), Var "y"))));; *)

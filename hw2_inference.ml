@@ -14,8 +14,6 @@ let x = ref 0;;
 let rec new_var c = x := !x + 1; ("n" ^ string_of_int(!x))
 ;;
 
-let rec infer_simp_type a = Some (("a", Cons(S_Elem("x"), Nil)), S_Elem("x"));;
-
 let rec infer_simp_equations a = match a with
 	| Hw1.Var x -> ([], S_Elem(x))
 	| App(p, q) -> let (pE, pT) = (infer_simp_equations p) in
@@ -58,13 +56,13 @@ let rec apply_substitution_to_var s v = match s with
 ;; 
 
 let rec apply_substitution_to_vars s v = match v with
-	| Nil -> Nil
-	| Cons(head, tail) -> Cons((apply_substitution_to_var s head), (apply_substitution_to_vars s tail))
+	| [] -> []
+	| head :: tail -> (apply_substitution_to_var s head) :: (apply_substitution_to_vars s tail)
 ;;
 
 let rec connect a b = match a, b with
-	| Nil, Nil -> Nil
-	| Cons(x, a_tail), Cons(y, b_tail) -> Cons((x, y), (connect a_tail b_tail))
+	| [], [] -> []
+	| x :: a_tail, y :: b_tail -> (x, y) :: (connect a_tail b_tail)
 	| _, _ -> raise (Invalid_argument "Connect")
 ;;
 
@@ -136,8 +134,8 @@ let rec add_quantifiers t = add_quantifiers_s t (hm_free_vars t)
 ;;
 
 let rec apply_var_sub s var = match s with
-	| Nil -> HM_Elem(var)
-	| Cons((x, y), tail) -> if x = var then y else (apply_var_sub tail var)
+	| [] -> HM_Elem(var)
+	| (x, y) :: tail -> if x = var then y else (apply_var_sub tail var)
 ;;
 
 let rec apply_single_sub s term = match term with
@@ -147,8 +145,8 @@ let rec apply_single_sub s term = match term with
 ;;
 
 let rec composition a b = match a with
-	| Nil -> Nil
-	| Cons((x, y), tail) -> Cons((x, (apply_single_sub b y))	, (composition tail b))
+	| [] -> []
+	| (x, y) :: tail -> (x, (apply_single_sub b y))	:: (composition tail b)
 ;;
 
 let rec remove_x g x = match g with
@@ -179,9 +177,9 @@ let rec alg_of_hm_type a = match a with
 ;;
 
 let rec hm_type_sub_of_alg_sub s = match s with
-	| [] -> Nil
+	| [] -> []
 	| head :: tail -> match head with
-		| (x, y) -> Cons((x, hm_type_of_alg y), (hm_type_sub_of_alg_sub tail))
+		| (x, y) -> (x, hm_type_of_alg y) :: (hm_type_sub_of_alg_sub tail)
 ;;
 
 let rec string_of_hm_type a = match a with
@@ -193,7 +191,7 @@ let rec string_of_hm_type a = match a with
 let rec sup_algorithm_w g m = match m with 
 	| HM_Var(a) -> let t = get_from_G g m in
 						if t = None then None
-							else Some (Nil, (remove_quantifiers (unpack t)))
+							else Some ([], (remove_quantifiers (unpack t)))
 
 	| HM_App(e1, e2) -> let sol1 = sup_algorithm_w g e1 in
 							if sol1 = None then None else let (s1, t1) = unpack sol1 in
@@ -223,6 +221,6 @@ let rec algorithm_w a = sup_algorithm_w [] a
 let x = HM_Abs("y", HM_App(HM_Abs("x", HM_Var("x")), HM_Var("y")))
 ;;
 
-if algorithm_w x = None then print_string ("No decision") else 
+(* if algorithm_w x = None then print_string ("No decision") else 
 	print_string (string_of_hm_type (snd (unpack (algorithm_w x))))
-;;
+;; *)

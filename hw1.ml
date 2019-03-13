@@ -1,8 +1,8 @@
 open Char;;
 open String;;
+open List;;
 type peano = Z | S of peano;;
 type lambda = Var of string | Abs of string * lambda | App of lambda * lambda;;
-type 'a list = Nil | Cons of 'a * 'a list;;
 
 let rec peano_of_int x = if x = 0 then Z else S (peano_of_int (x - 1))
 
@@ -46,34 +46,34 @@ let rec peano_string x = match x with
 (* reverse module*)
 
 let rec revhelper revhead tail = match tail with
-	Nil -> revhead
-	| Cons (element, tail) -> revhelper (Cons (element, revhead)) tail;;
+	[] -> revhead
+	| element :: tail -> revhelper (element :: revhead) tail;;
 
-let rev x = revhelper Nil x;;
+let rev x = revhelper [] x;;
 
 (*merge sort*)
 let rec halve lst = match lst with 
-	Nil -> Nil, Nil
-	| Cons(a, Nil) as t -> t, Nil
-	| Cons(a, Cons(b, lst)) -> let lst1, lst2 = halve lst in
-								Cons(a, lst1), Cons(b, lst2);;
+	[] -> [], []
+	| a :: [] as t -> t, []
+	| a :: (b :: lst) -> let lst1, lst2 = halve lst in
+								a :: lst1, b :: lst2;;
 
  let rec merge = function
-	| a, Nil -> a
-	| Nil, b -> b
-	| Cons(a, at), Cons(b, bt) ->
-	if a <= b then Cons (a, merge(at, Cons(b, bt)))
-				else Cons (b, merge(Cons(a, at), bt));;
+	| a, [] -> a
+	| [], b -> b
+	| a :: at, b :: bt ->
+	if a <= b then a :: (merge(at, b :: bt))
+				else b :: (merge(a :: at, bt));;
 
 let rec merge_sort = function 
-	| Nil as ret -> ret
-	| Cons(_, Nil) as ret -> ret
+	| [] as ret -> ret
+	| _ :: [] as ret -> ret
 	| lst -> let (part1, part2) = halve lst in
 		merge(merge_sort part1, merge_sort part2);;
 
 let rec print_list = function
-	| Nil -> print_string "\n"
-	| Cons(element, tail) ->
+	| [] -> print_string "\n"
+	| element :: tail ->
 	 print_int element; print_string " "; (print_list tail);;
 
 
@@ -95,9 +95,17 @@ let lambda_of_string expr =
 
 	let is_letter x = (('a' <= x) && (x <= 'z')) in
 
+	let is_big_letter x = (('A' <= x) && (x <= 'Z')) in
+
+	let is_digit x = (('0' <= x) && (x <= '9')) in
+
+	let rec tail_var () =
+		let x = cchar_without_moving () in
+			if (is_letter x) || (is_digit x) || (is_big_letter x) then (Char.escaped x) ^ (next(); tail_var()) else "" in
+
 	let rec var () =
 		let x = cchar_without_moving () in
-		if is_letter x then (Char.escaped x) ^ (next (); var ()) else "" in
+		if is_letter x then (Char.escaped x) ^ (next (); tail_var ()) else "" in
 	
 	let rec lambda () =
 		let temp = match cchar() with
@@ -124,7 +132,6 @@ let rec string_of_lambda = function
 	| Abs (x, y) -> "(" ^ "\\" ^ x ^ "." ^ (string_of_lambda y) ^ ")"
 	| App (x, y) -> "(" ^ (string_of_lambda x) ^ (string_of_lambda y) ^ ")";;
 
-let s = lambda_of_string("(   \\f.\\x   .   (f f f f f f f f x   )  )");;
 
 (* print_string (string_of_lambda s);; *)
 
