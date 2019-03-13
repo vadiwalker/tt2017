@@ -56,25 +56,29 @@ let rec halve lst = match lst with
 	[] -> [], []
 	| a :: [] as t -> t, []
 	| a :: (b :: lst) -> let lst1, lst2 = halve lst in
-								a :: lst1, b :: lst2;;
+								a :: lst1, b :: lst2
+;;
 
  let rec merge = function
 	| a, [] -> a
 	| [], b -> b
 	| a :: at, b :: bt ->
 	if a <= b then a :: (merge(at, b :: bt))
-				else b :: (merge(a :: at, bt));;
+				else b :: (merge(a :: at, bt))
+;;
 
 let rec merge_sort = function 
 	| [] as ret -> ret
 	| _ :: [] as ret -> ret
 	| lst -> let (part1, part2) = halve lst in
-		merge(merge_sort part1, merge_sort part2);;
+		merge(merge_sort part1, merge_sort part2)
+;;
 
 let rec print_list = function
 	| [] -> print_string "\n"
 	| element :: tail ->
-	 print_int element; print_string " "; (print_list tail);;
+	 print_int element; print_string " "; (print_list tail)
+;;
 
 
 
@@ -107,25 +111,32 @@ let lambda_of_string expr =
 		let x = cchar_without_moving () in
 		if is_letter x then (Char.escaped x) ^ (next (); tail_var ()) else "" in
 	
-	let rec lambda () =
-		let temp = match cchar() with
-		| ' ' -> next(); lambda()
+	let rec app_of a = match a with
+		| x :: y :: tail -> (app_of ((App(x, y)) :: tail))
+		| x :: [] -> x
+		| [] -> raise (Invalid_argument "App of") in
+
+	let rec push a x = match a with
+		| [] -> [x]
+		| head :: tail -> head :: (push tail x) in
+
+	let rec lambda x =
+		if ((is_letter (cchar ()) = false) && (cchar() != '(') && (cchar() != '\\')) then
+								(app_of x) else match cchar() with
+		| ' ' -> next(); (lambda x)
 
 		| '\\' ->
 		  let a = next(); var() in
-		  	let b = (assert (cchar() = '.')); next(); lambda() in
-		 	 Abs(a, b) 
+		  	let b = (assert (cchar() = '.')); next(); (lambda []) in
+		 	 (lambda (push x (Abs(a, b)))) 
 
-		| '(' -> let ret = next (); lambda () in 
-				(assert (cchar() = ')')); next (); ret
+		| '(' -> let ret = next (); (lambda []) in 
+				(assert (cchar() = ')')); next (); (lambda (push x ret))
 
-		| x -> if is_letter x then Var (var ())
-								else failwith "invalid expression!" in
+		| y -> if is_letter y then (lambda (push x (Var(var()))))
+								else failwith "Invalid expression!" in
 
-		if ((is_letter (cchar ()) = false) && (cchar() != '(') && (cchar() != '\\')) 
-			then temp else App(temp, lambda ()) in
-	
-	lambda ();;
+	lambda [];;
 
 let rec string_of_lambda = function 
 	| Var x -> x
