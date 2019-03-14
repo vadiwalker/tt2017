@@ -43,7 +43,7 @@ let rec free_to_subst_c q p x abss = match p with
 let rec free_to_subst q p x = free_to_subst_c q p x [];;
 
 let rec is_normal_form p = match p with
-	| Var _ -> true
+	| Var(_) -> true
 	| App(Abs(_, _), _) -> false
 	| App(a, b) -> (is_normal_form a) && (is_normal_form b)
 	| Abs(x, b) -> (is_normal_form b)
@@ -51,7 +51,7 @@ let rec is_normal_form p = match p with
 
 (* p[x = q] *)
 let rec sub p x q = match p with
-	| Var y as arg -> if x = y then q else arg
+	| Var(y) as arg -> if x = y then q else arg
 	| Abs(y, a) -> Abs(y, sub a x q)
 	| App(a, b) -> App((sub a x q), (sub b x q));
 ;;
@@ -75,24 +75,42 @@ let rec reduce_to_normal_form p = if is_normal_form p then p else reduce_to_norm
 
 let rec mem_reduce_to_normal_form p reduced = if (mem_assoc p reduced) then (assoc p reduced, reduced) else match p with
 	| Var x -> (Var x, reduced)
-	| App(Abs(x, a), b) -> let c = mem_reduce_to_normal_form a reduced in
-							let d = mem_reduce_to_normal_form b (snd c) in
-								let expr = (sub (fst c) x (fst d)) in
-									(expr, (p, expr) :: (snd d))
-	| App(a, b) -> let c = mem_reduce_to_normal_form a reduced in
-					let d = mem_reduce_to_normal_form b (snd c) in
-						let expr = App((fst c), (fst d)) in
-							(expr, (p, expr) :: (snd d))
-	| Abs(x, a) -> let c = mem_reduce_to_normal_form a reduced in
-					let expr = Abs(x, (fst c)) in
-						(expr, (p, expr) :: (snd c))
+	| App(Abs(x, a), b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
+							let (p2, reduced2) = mem_reduce_to_normal_form b reduced1 in
+								let expr = (sub p1 x p2) in
+									(expr, (p, expr) :: reduced2)
+
+	| App(a, b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
+					let (p2, reduced2) = mem_reduce_to_normal_form b reduced1 in
+						let expr = App(p1, p2) in
+							(expr, (p, expr) :: reduced2)
+
+	| Abs(x, a) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
+					let expr = Abs(x, p1) in
+						(expr, (p, expr) :: reduced1)
 ;;
 
-let rec reduce_to_normal_form p = (fst (mem_reduce_to_normal_form p [(Var "x", Var "x")]))
+let rec reduce_to_normal_form_recurisve p map = if is_normal_form p then p else
+													let (p1, map1) = (mem_reduce_to_normal_form p map) in
+														let w = print_string ((string_of_int (length map1)) ^ "\n") in
+															reduce_to_normal_form_recurisve p1 map1
 ;;
 
+let rec reduce_to_normal_form p = reduce_to_normal_form_recurisve p []
+;;
 
-let s = lambda_of_string("(   \\f.(\\x   .   (f00123 fasds21312S f f f f f f x   ))  f )");;
+let s = lambda_of_string("(   \\f.(\\x.   (f00123 fasds21312S f f f f f f x   ))  f )");;
+
+(* print_string (string_of_lambda s);; *)
+
+let add = lambda_of_string "((\\a.\\b.\\f.\\x. a f (b f x)) (\\f.\\x. f (f(x)))) (\\f.\\x. (f(f(f(x)))))"
+;;
+
+let dir = lambda_of_string "a b c"
+;;
+
+(* print_string(string_of_lambda(dir));; *)
+(* print_string(string_of_lambda(reduce_to_normal_form add));; *)
 
 (* print_string (string_of_lambda (reduce_to_normal_form s));; *)
 
