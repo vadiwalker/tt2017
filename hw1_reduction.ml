@@ -73,7 +73,7 @@ let rec normal_beta_reduction p = match p with
 (* let rec reduce_to_normal_form p = if is_normal_form p then p else reduce_to_normal_form (normal_beta_reduction p)
 ;; *)
 
-let map = ref [];;
+(* let map = ref [];;
 
 let rec push_to_map e = map := e :: !map ; ();;
 
@@ -82,10 +82,10 @@ let rec reduce_to_normal_form p = if is_normal_form p then p else
 										let x = (reduce_to_normal_form (normal_beta_reduction p)) in
 											push_to_map (p, x) ;
 												x
-;;
+;; *)
 										
 
-(* let rec mem_reduce_to_normal_form p reduced = if (mem_assoc p reduced) then (assoc p reduced, reduced) else match p with
+let rec mem_reduce_to_normal_form p reduced = if (mem_assoc p reduced) then (assoc p reduced, reduced) else match p with
 	| Var x -> (Var x, reduced)
 	| App(Abs(x, a), b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
 							let (p2, reduced2) = mem_reduce_to_normal_form b reduced1 in
@@ -104,13 +104,12 @@ let rec reduce_to_normal_form p = if is_normal_form p then p else
 
 let rec reduce_to_normal_form_recurisve p map = if is_normal_form p then p else
 													let (p1, map1) = (mem_reduce_to_normal_form p map) in
-														let w = print_string ((string_of_int (length map1)) ^ "\n") in
 															reduce_to_normal_form_recurisve p1 map1
-;; *)
-
-(* let rec reduce_to_normal_form p = reduce_to_normal_form_recurisve p []
 ;;
- *)
+
+let rec reduce_to_normal_form p = reduce_to_normal_form_recurisve p []
+;;
+
 let s = lambda_of_string("(   \\f.(\\x.   (f00123 fasds21312S f f f f f f x   ))  f )");;
 
 (* print_string (string_of_lambda s);; *)
@@ -122,9 +121,9 @@ let dir = lambda_of_string "a b c"
 ;;
 
 (* print_string(string_of_lambda(dir));; *)
-(* print_string(string_of_lambda(reduce_to_normal_form add));;
-print_string (string_of_int (length !map));;
- *)
+(* print_string(string_of_lambda(reduce_to_normal_form add));; *)
+(* print_string (string_of_int (length !map));; *)
+
 (* print_string (string_of_lambda (reduce_to_normal_form s));; *)
 
 (* print_string (string_of_lambda (reduce_to_normal_form (App(Abs("x", Var "x"), Var "y"))));; *)
