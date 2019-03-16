@@ -59,7 +59,8 @@ let rec sub p x q = match p with
 let rec is_alpha_equivalent p q = match p, q with
 	| Var x, Var y -> if x = y then true else false
 	| App(a, b), App(c, d) -> (is_alpha_equivalent a c) && (is_alpha_equivalent b d)
-	| Abs(x, a), Abs(y, b) -> (is_alpha_equivalent (sub a x (Var (new_var ()))) (sub b y (Var (new_var ()))))
+	| Abs(x, a), Abs(y, b) -> let n = new_var () in
+								(is_alpha_equivalent (sub a x (Var (n))) (sub b y (Var (n))))
 	| _, _ -> false
 ;;
 
@@ -119,6 +120,11 @@ let add = lambda_of_string "((\\a.\\b.\\f.\\x. a f (b f x)) (\\f.\\x. f (f (f (f
 
 let dir = lambda_of_string "a b c"
 ;;
+
+let lmd1 = lambda_of_string "\\x.x";;
+let lmd2 = lambda_of_string "\\y.y";;
+
+print_string (if is_alpha_equivalent (lmd1) (lmd2) then "true" else "false");;
 
 (* print_string(string_of_lambda(dir));; *)
 (* print_string(string_of_lambda(reduce_to_normal_form add));; *)
