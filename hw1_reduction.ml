@@ -86,21 +86,22 @@ let rec reduce_to_normal_form p = if is_normal_form p then p else
 ;; *)
 										
 
-let rec mem_reduce_to_normal_form p reduced = if (mem_assoc p reduced) then (assoc p reduced, reduced) else match p with
+let rec mem_reduce_to_normal_form p reduced = if (Hashtbl.mem reduced p) then (Hashtbl.find reduced p, reduced) else match p with
 	| Var x -> (Var x, reduced)
+	
 	| App(Abs(x, a), b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
 							let (p2, reduced2) = mem_reduce_to_normal_form b reduced1 in
 								let expr = (sub p1 x p2) in
-									(expr, (p, expr) :: reduced2)
+									(Hashtbl.add reduced2 p expr) ; (expr, reduced2)
 
 	| App(a, b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
 					let (p2, reduced2) = mem_reduce_to_normal_form b reduced1 in
 						let expr = App(p1, p2) in
-							(expr, (p, expr) :: reduced2)
+							(Hashtbl.add reduced2 p expr) ; (expr, reduced2)
 
 	| Abs(x, a) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
 					let expr = Abs(x, p1) in
-						(expr, (p, expr) :: reduced1)
+						(Hashtbl.add reduced1 p expr) ; (expr, reduced1)
 ;;
 
 let rec reduce_to_normal_form_recurisve p map = if is_normal_form p then p else
@@ -108,7 +109,7 @@ let rec reduce_to_normal_form_recurisve p map = if is_normal_form p then p else
 															reduce_to_normal_form_recurisve p1 map1
 ;;
 
-let rec reduce_to_normal_form p = reduce_to_normal_form_recurisve p []
+let rec reduce_to_normal_form p = reduce_to_normal_form_recurisve p (Hashtbl.create 10)
 ;;
 
 let s = lambda_of_string("(   \\f.(\\x.   (f00123 fasds21312S f f f f f f x   ))  f )");;
@@ -121,13 +122,15 @@ let add = lambda_of_string "((\\a.\\b.\\f.\\x. a f (b f x)) (\\f.\\x. f (f (f (f
 let dir = lambda_of_string "a b c"
 ;;
 
-let lmd1 = lambda_of_string "\\x.x";;
+
+
+(* let lmd1 = lambda_of_string "\\x.x";;
 let lmd2 = lambda_of_string "\\y.y";;
 
-print_string (if is_alpha_equivalent (lmd1) (lmd2) then "true" else "false");;
+print_string (if is_alpha_equivalent (lmd1) (lmd2) then "true" else "false");; *)
 
 (* print_string(string_of_lambda(dir));; *)
-(* print_string(string_of_lambda(reduce_to_normal_form add));; *)
+print_string(string_of_lambda(reduce_to_normal_form add));;
 (* print_string (string_of_int (length !map));; *)
 
 (* print_string (string_of_lambda (reduce_to_normal_form s));; *)
