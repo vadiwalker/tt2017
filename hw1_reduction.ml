@@ -111,7 +111,7 @@ let rec reduce_to_normal_form p = if is_normal_form p then p else
 ;; *)
 										
 
-let rec mem_reduce_to_normal_form p reduced = if (H.mem reduced p) then (print_string "FIND"; (H.find reduced p, reduced)) else match p with
+let rec mem_reduce_to_normal_form p reduced = if (H.mem reduced p) then H.find reduced p, reduced else match p with
 	| Var x -> (Var x, reduced)
 	
 	| App(Abs(x, a), b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
@@ -152,8 +152,8 @@ let dir = lambda_of_string "a b c"
 ;;
 
 let lmd1 = lambda_of_string "((\\x.\\y.x) (\\z.y)) k";;
-(* print_string (string_of_lambda (normal_beta_reduction lmd1));; print_newline ();;(*  *)
-print_string (string_of_lambda (reduce_to_normal_form lmd1));; print_newline ();; *)
+print_string (string_of_lambda (normal_beta_reduction lmd1));; print_newline ();;(*  *)
+print_string (string_of_lambda (reduce_to_normal_form lmd1));; print_newline ();;
 
 
 let h = (H.create 10);;
