@@ -64,9 +64,21 @@ let rec is_alpha_equivalent p q = match p, q with
 	| _, _ -> false
 ;;
 
+let rec rename a map = match a with
+	| Abs(x, b) -> let nv = new_var () in
+					(Hashtbl.add map x nv) ; Abs(nv, rename b map)
+
+	| App(x, y) -> App(rename x map, rename y map)
+
+	| Var(x) -> if (Hashtbl.mem map x) then Var(Hashtbl.find map x) else Var(x)
+;;
+
 let rec normal_beta_reduction p = match p with
 	| Var x -> Var x
-	| App(Abs(x, a), b) -> sub a x b
+	| App(Abs(x, a), b) ->	let magic_hashtbl = (Hashtbl.create 10) in
+								let re_a = (Hashtbl.add magic_hashtbl x x) ; rename a magic_hashtbl in
+									  sub re_a x b
+
 	| App(a, b) -> if not (is_normal_form a) then App(normal_beta_reduction a, b) 
 		else App(a, normal_beta_reduction b)
 	| Abs(x, a) -> Abs(x, normal_beta_reduction a)
@@ -91,8 +103,10 @@ let rec mem_reduce_to_normal_form p reduced = if (Hashtbl.mem reduced p) then (H
 	
 	| App(Abs(x, a), b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
 							let (p2, reduced2) = mem_reduce_to_normal_form b reduced1 in
-								let expr = (sub p1 x p2) in
-									(Hashtbl.add reduced2 p expr) ; (expr, reduced2)
+								let magic_hashtbl = (Hashtbl.create 10) in
+									let re_p1 = (Hashtbl.add magic_hashtbl x x) ; rename p1 magic_hashtbl in
+										let expr = (sub re_p1 x p2) in
+											(Hashtbl.add reduced2 p expr) ; (expr, reduced2)
 
 	| App(a, b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
 					let (p2, reduced2) = mem_reduce_to_normal_form b reduced1 in
@@ -103,6 +117,8 @@ let rec mem_reduce_to_normal_form p reduced = if (Hashtbl.mem reduced p) then (H
 					let expr = Abs(x, p1) in
 						(Hashtbl.add reduced1 p expr) ; (expr, reduced1)
 ;;
+
+
 
 let rec reduce_to_normal_form_recurisve p map = if is_normal_form p then p else
 													let (p1, map1) = (mem_reduce_to_normal_form p map) in
@@ -122,6 +138,9 @@ let add = lambda_of_string "((\\a.\\b.\\f.\\x. a f (b f x)) (\\f.\\x. f (f (f (f
 let dir = lambda_of_string "a b c"
 ;;
 
+let lmd1 = lambda_of_string "((\\x.\\y.x) (\\z.y)) k";;
+print_string (string_of_lambda (normal_beta_reduction lmd1));; print_newline ();;
+print_string (string_of_lambda (reduce_to_normal_form lmd1));;
 
 
 (* let lmd1 = lambda_of_string "\\x.x";;
@@ -130,7 +149,7 @@ let lmd2 = lambda_of_string "\\y.y";;
 print_string (if is_alpha_equivalent (lmd1) (lmd2) then "true" else "false");; *)
 
 (* print_string(string_of_lambda(dir));; *)
-print_string(string_of_lambda(reduce_to_normal_form add));;
+(* print_string(string_of_lambda(reduce_to_normal_form add));; *)
 (* print_string (string_of_int (length !map));; *)
 
 (* print_string (string_of_lambda (reduce_to_normal_form s));; *)
