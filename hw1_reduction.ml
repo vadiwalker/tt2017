@@ -86,6 +86,11 @@ module H = Hashtbl.Make(struct
   let hash a = Hashtbl.hash (rename_to_format a (Hashtbl.create 10))
 end);;
 
+
+let map = ref [];;
+
+let rec push_to_map e = map := e :: !map ; ();;
+
 let rec normal_beta_reduction p = match p with
 	| Var x -> Var x
 	| App(Abs(x, a), b) ->	let magic_hashtbl = (Hashtbl.create 10) in
@@ -99,19 +104,16 @@ let rec normal_beta_reduction p = match p with
 (* let rec reduce_to_normal_form p = if is_normal_form p then p else reduce_to_normal_form (normal_beta_reduction p)
 ;; *)
 
-(* let map = ref [];;
-
-let rec push_to_map e = map := e :: !map ; ();;
 
 let rec reduce_to_normal_form p = if is_normal_form p then p else 
-									if (mem_assoc p !map) then (assoc p !map) else
+									(* if (mem_assoc p !map) then (assoc p !map) else *)
 										let x = (reduce_to_normal_form (normal_beta_reduction p)) in
-											push_to_map (p, x) ;
+											(* push_to_map (p, x) ; *)
 												x
-;; *)
+;;
 										
 
-let rec mem_reduce_to_normal_form p reduced = if (H.mem reduced p) then H.find reduced p, reduced else match p with
+(* let rec mem_reduce_to_normal_form p reduced = if (H.mem reduced p) then H.find reduced p, reduced else match p with
 	| Var x -> (Var x, reduced)
 	
 	| App(Abs(x, a), b) -> let (p1, reduced1) = mem_reduce_to_normal_form a reduced in
@@ -139,7 +141,7 @@ let rec reduce_to_normal_form_recurisve p map = if is_normal_form p then p else
 ;;
 
 let rec reduce_to_normal_form p = reduce_to_normal_form_recurisve p (H.create 10)
-;;
+;; *)
 
 let s = lambda_of_string("(   \\f.(\\x.   (f00123 fasds21312S f f f f f f x   ))  f )");;
 
@@ -152,8 +154,8 @@ let dir = lambda_of_string "a b c"
 ;;
 
 let lmd1 = lambda_of_string "((\\x.\\y.x) (\\z.y)) k";;
-print_string (string_of_lambda (normal_beta_reduction lmd1));; print_newline ();;(*  *)
-print_string (string_of_lambda (reduce_to_normal_form lmd1));; print_newline ();;
+(* print_string (string_of_lambda (normal_beta_reduction lmd1));; print_newline ();;
+print_string (string_of_lambda (reduce_to_normal_form lmd1));; print_newline ();; *)
 
 
 let h = (H.create 10);;
@@ -169,9 +171,19 @@ let lmd2 = lambda_of_string "\\y.y";;
 print_string (if is_alpha_equivalent (lmd1) (lmd2) then "true" else "false");; *)
 
 (* print_string(string_of_lambda(dir));; *)
-print_string(string_of_lambda(reduce_to_normal_form add));;
+(* print_string(string_of_lambda(reduce_to_normal_form add));; *)
 (* print_string (string_of_int (length !map));; *)
+
+(* print_string (string_of_lambda (reduce_to_normal_form (App(Abs("x", Abs("x", Var("x"))), Var("x")))));; *)
 
 (* print_string (string_of_lambda (reduce_to_normal_form s));; *)
 
 (* print_string (string_of_lambda (reduce_to_normal_form (App(Abs("x", Var "x"), Var "y"))));; *)
+
+
+let lmd_r = lambda_of_string "((\\l0.((\\l1.((\\l2.((\\l3.((\\l4.((\\l5.((\\l6.((\\l7.((\\l8.((\\l9.((\\l10.((\\l11.((\\l12.((\\l13.((l13 (\\l14.(\\l15.(l14 (l14 l15))))) (\\l14.(\\l15.(l14 (l14 (l14 l15))))))) (\\l13.(\\l14.(((l0 (\\l15.(\\l16.(\\l17.(((l1 (l10 l16)) (l12 l17)) (((l1 (l10 l17)) ((l15 (l11 l16)) (\\l18.(\\l19.(l18 l19))))) ((l15 (l11 l16)) ((l15 l16) (l11 l17))))))))) l13) l14))))) (\\l12.(\\l13.(\\l14.((l12 l13) (l13 l14))))))) (\\l11.(\\l12.(\\l13.(((l11 (\\l14.(\\l15.(l15 (l14 l12))))) (\\l14.l13)) (\\l14.l14))))))) (\\l10.((l10 (\\l11.l3)) l2)))) (l0 (\\l9.(\\l10.(\\l11.((\\l12.((\\l13.(((l1 l12) l13) (((l1 l13) l12) ((l9 (l4 l10)) (l4 l11))))) (l8 l11))) (l8 l10)))))))) (\\l8.((l8 (\\l9.l3)) l2)))) (\\l7.(\\l8.((l8 l4) l7))))) (\\l6.(\\l7.((l6 l5) l7))))) (\\l5.(\\l6.(\\l7.((l5 l6) (l6 l7))))))) (\\l4.(\\l5.(\\l6.(((l4 (\\l7.(\\l8.(l8 (l7 l5))))) (\\l7.l6)) (\\l7.l7))))))) (\\l3.(\\l4.l4)))) (\\l2.(\\l3.l2)))) (\\l1.(\\l2.(\\l3.((l1 l2) l3)))))) (\\l0.((\\l1.(l0 (l1 l1))) (\\l1.(l0 (l1 l1))))))";;
+
+let rdt = lambda_of_string "\\x1.(\\x2.(x1 (x1 (x1 (x1 (x1 (x1 (x1 (x1 (x1 x2))))))))))";;
+
+(* print_string (string_of_lambda (reduce_to_normal_form lmd_r));;
+print_string (string_of_lambda (reduce_to_normal_form rdt));; *)

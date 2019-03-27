@@ -141,8 +141,7 @@ let lambda_of_string expr =
 let rec string_of_lambda = function 
 	| Var x -> x
 	| Abs (x, y) -> "(" ^ "\\" ^ x ^ "." ^ (string_of_lambda y) ^ ")"
-	| App (x, y) -> "(" ^ (string_of_lambda x) ^ (string_of_lambda y) ^ ")";;
-
+	| App (x, y) -> "(" ^ (string_of_lambda x) ^ " " ^ (string_of_lambda y) ^ ")";;
 
 (* print_string (string_of_lambda s);; *)
 
