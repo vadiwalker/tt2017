@@ -154,10 +154,22 @@ let rec apply_single_sub s term = match term with
 	| HM_ForAll(x, y) -> HM_ForAll(x, apply_single_sub s y)
 ;;
 
-let rec composition a b = match a with
-	| [] -> []
-	| (x, y) :: tail -> (x, (apply_single_sub b y))	:: (composition tail b)
+let rec add_required_id v it_g = match it_g with
+	| [] -> [(v, HM_Elem(v))]
+	| (x, y) :: tail -> if x = v then it_g else ((x, y) :: (add_required_id v tail))
 ;;
+
+let rec add_required_ids it_f g = match it_f with
+	| [] -> g
+	| (x, y) :: tail -> (add_required_ids tail (add_required_id x g))
+
+let rec composition f g = match g with
+	| [] -> []
+	| (x, y) :: tail -> (x, (apply_single_sub f y))	:: (composition f tail)
+;;
+
+let rec smart_composition f g = composition f (add_required_ids f g)
+;; 
 
 let rec remove_x g x = match g with
 	| [] -> []
@@ -208,7 +220,7 @@ let rec sup_algorithm_w g m = match m with
 									let beta = HM_Elem(new_var ()) in
 										let alg_v = solve_system [alg_of_hm_type (apply_single_sub s2 t1), alg_of_hm_type (HM_Arrow(t2, beta))] in
 											if alg_v = None then None else let v = hm_type_sub_of_alg_sub (unpack alg_v) in
-												let s = composition (composition v s1) s2 in
+												let s = smart_composition (smart_composition v s1) s2 in
 													Some (s, (apply_single_sub s beta))
 									with Not_found -> None) in ret
 
@@ -221,7 +233,7 @@ let rec sup_algorithm_w g m = match m with
 								if sol1 = None then None else let (s1, t1) = unpack sol1 in
 									let sol2 = sup_algorithm_w (apply_substitution_to_g s1 ((remove_x g (HM_Var(x))) @ [(HM_Var(x), add_quantifiers t1)])) e2 in
 										if sol2 = None then None else let (s2, t2) = unpack sol2 in
-											Some ((composition s2 s1), t2) *)
+											Some ((smart_composition s2 s1), t2) *)
 
 										
 	| HM_Let(x, e1, e2) -> let ret = (try let (s1, t1) = unpack (sup_algorithm_w g e1) in
@@ -229,7 +241,7 @@ let rec sup_algorithm_w g m = match m with
 									let x_type = (add_quantifiers s1g t1) in
 										let s1g_with_x = (remove_x s1g (HM_Var(x))) @ [HM_Var(x), x_type] in
 											let (s2, t2) = unpack (sup_algorithm_w s1g_with_x e2) in
-												Some ((composition s2 s1), t2)
+												Some ((smart_composition s2 s1), t2)
 										with Not_found -> None) in ret
 ;;
 
@@ -241,10 +253,21 @@ let rec string_of_sub a = match a with
 	| (x, y) :: tail -> x ^ " = " ^ (string_of_hm_type y) ^ "\n" ^ (string_of_sub tail) 
 ;;
 
-let x = HM_App(HM_Abs("x", HM_Var("x")), HM_Var("y"))
+(* let x = HM_Abs("f", HM_Abs("x", HM_App(HM_Var("f"), HM_App(HM_Var("f"), HM_App(HM_Var("f"), HM_Var("x"))))))
 ;;
 
-(* if algorithm_w x = None then print_string ("No decision") else 
+let hm_one = HM_Abs("f", HM_Abs("x", HM_App(HM_Var("f"), HM_Var("x"))))
+;;
+
+let expr = HM_Let("sg", hm_one, HM_App(HM_Var("sg"), HM_Var("sg")));;
+ *)
+(* 
+let v = [("x", HM_Elem("n1")); ("n1", HM_Elem("n2"))];;
+let s = [("f", HM_Arrow(HM_Elem("x"), HM_Elem("n1")))];; *)
+
+(* print_string (string_of_sub (smart_composition v s));; *)
+
+(* if algorithm_w expr = None then print_string ("No Decision!!!") else 
 		let (s, t) = (unpack (algorithm_w x)) in
-			print_string (string_of_hm_type t) ; print_string (string_of_sub s)
+			print_string (string_of_hm_type t) (* ; print_string (string_of_sub s) *)
 ;; *)
